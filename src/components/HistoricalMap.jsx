@@ -2,9 +2,8 @@ import React, { useEffect, useRef, useState } from 'react'
 import * as d3 from 'd3'
 import * as topojson from 'topojson-client'
 
-// Brightened 6-color oxidized ink palette
 const MAP_PALETTE = [
-  '#008080', // Bright Teal
+  '#367066', // Bright Teal
   '#2c5a8c', // Bright Deep Blue
   '#317546', // Bright Forest Green
   '#8c3636', // Bright Burgundy
@@ -12,13 +11,11 @@ const MAP_PALETTE = [
   '#b38827', // Bright Ochre
 ]
 
-// ─── LINK DETACHED TERRITORIES ───
 const TERRITORY_OWNERS = {
   'Alaska': 'United States of America',
   'Hawaii': 'United States of America'
 }
 
-// Cache the base physical map so we only download it once per session
 let cachedBaseLand = null
 
 export default function HistoricalMap({ geojsonPath, year }) {
@@ -37,7 +34,6 @@ export default function HistoricalMap({ geojsonPath, year }) {
 
     const loadMaps = async () => {
       try {
-        // 1. Fetch physical base map if we haven't already
         if (!cachedBaseLand) {
           const baseRes = await fetch('https://unpkg.com/world-atlas@2/land-110m.json', { signal: controller.signal })
           if (!baseRes.ok) throw new Error('Failed to load base map')
@@ -45,7 +41,6 @@ export default function HistoricalMap({ geojsonPath, year }) {
           cachedBaseLand = topojson.feature(baseTopology, baseTopology.objects.land)
         }
 
-        // 2. Fetch the historical political map for this specific year
         const histRes = await fetch(geojsonPath, { signal: controller.signal })
         if (!histRes.ok) throw new Error(`HTTP ${histRes.status}`)
         const topology = await histRes.json()
@@ -54,25 +49,31 @@ export default function HistoricalMap({ geojsonPath, year }) {
         const neighbors = topojson.neighbors(geometries)
         const geojson = topojson.feature(topology, topology.objects.countries)
 
-        // ─── BULLETPROOF WINDING ORDER FIX (PER POLYGON) ───
+        // ─── THE CARTESIAN REWINDER (100% BULLETPROOF) ───
+        // Bypasses D3's spherical math and forces valid GeoJSON 
+        // using the 2D Shoelace formula.
         geojson.features.forEach(feature => {
-          if (feature.geometry.type === 'Polygon') {
-            if (d3.geoArea(feature.geometry) > 2 * Math.PI) {
-              feature.geometry.coordinates.forEach(ring => ring.reverse())
-            }
-          } else if (feature.geometry.type === 'MultiPolygon') {
-            // Armenia is a MultiPolygon. We MUST check each detached landmass individually!
-            feature.geometry.coordinates.forEach(poly => {
-              const tempGeo = { type: 'Polygon', coordinates: poly }
-              if (d3.geoArea(tempGeo) > 2 * Math.PI) {
-                poly.forEach(ring => ring.reverse())
+          const fixWinding = (poly) => {
+            poly.forEach((ring, i) => {
+              let area = 0;
+              for (let j = 0; j < ring.length - 1; j++) {
+                area += (ring[j+1][0] - ring[j][0]) * (ring[j+1][1] + ring[j][1]);
               }
-            })
-          }
-        })
-        // ───────────────────────────────────────────────────
+              // area < 0 means Counter-Clockwise (Exterior rings)
+              // area > 0 means Clockwise (Hole rings)
+              if (i === 0 && area > 0) ring.reverse(); 
+              if (i > 0 && area < 0) ring.reverse();   
+            });
+          };
 
-        // 3. Apply Colors
+          if (feature.geometry.type === 'Polygon') {
+            fixWinding(feature.geometry.coordinates);
+          } else if (feature.geometry.type === 'MultiPolygon') {
+            feature.geometry.coordinates.forEach(fixWinding);
+          }
+        });
+        // ─────────────────────────────────────────────────
+
         const assignedColors = new Array(geojson.features.length).fill(null)
         const groupColors = {} 
 
@@ -155,7 +156,6 @@ export default function HistoricalMap({ geojsonPath, year }) {
       .attr('fill', 'transparent')
       .on('mouseover', () => setHoveredData(null))
 
-    // ─── DRAW SPHERE (Outer Projection Boundary) ───
     g.append('path')
       .datum({ type: 'Sphere' })
       .attr('class', 'map-path')
@@ -164,7 +164,6 @@ export default function HistoricalMap({ geojsonPath, year }) {
       .attr('stroke', 'var(--border)')
       .attr('stroke-width', 0.5)
 
-    // ─── DRAW GRATICULE (Lat/Lon Grid) ───
     const graticule = d3.geoGraticule()
       .extent([[-180, -90], [180, 90]])
 
@@ -177,7 +176,6 @@ export default function HistoricalMap({ geojsonPath, year }) {
       .attr('stroke-width', 0.5)
       .attr('stroke-opacity', 0.5) 
 
-    // ─── DRAW BASE LAYER (Physical Landmass) ───
     if (baseLand) {
       g.append('g')
         .attr('class', 'base-layer')
@@ -191,7 +189,6 @@ export default function HistoricalMap({ geojsonPath, year }) {
         .attr('stroke', 'none')  
     }
 
-    // ─── DRAW POLITICAL LAYER (Historical Borders) ───
     g.append('g')
       .attr('class', 'political-layer')
       .selectAll('path')
