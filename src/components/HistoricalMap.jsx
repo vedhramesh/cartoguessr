@@ -54,19 +54,23 @@ export default function HistoricalMap({ geojsonPath, year }) {
         const neighbors = topojson.neighbors(geometries)
         const geojson = topojson.feature(topology, topology.objects.countries)
 
-        // ─── BULLETPROOF WINDING ORDER FIX ───
-        // If a polygon is inverted, its spherical area will be larger than half the earth (> 2π).
+        // ─── BULLETPROOF WINDING ORDER FIX (PER POLYGON) ───
         geojson.features.forEach(feature => {
-          if (d3.geoArea(feature) > 2 * Math.PI) {
-            if (feature.geometry.type === 'Polygon') {
+          if (feature.geometry.type === 'Polygon') {
+            if (d3.geoArea(feature.geometry) > 2 * Math.PI) {
               feature.geometry.coordinates.forEach(ring => ring.reverse())
-            } else if (feature.geometry.type === 'MultiPolygon') {
-              feature.geometry.coordinates.forEach(poly => {
-                poly.forEach(ring => ring.reverse())
-              })
             }
+          } else if (feature.geometry.type === 'MultiPolygon') {
+            // Armenia is a MultiPolygon. We MUST check each detached landmass individually!
+            feature.geometry.coordinates.forEach(poly => {
+              const tempGeo = { type: 'Polygon', coordinates: poly }
+              if (d3.geoArea(tempGeo) > 2 * Math.PI) {
+                poly.forEach(ring => ring.reverse())
+              }
+            })
           }
         })
+        // ───────────────────────────────────────────────────
 
         // 3. Apply Colors
         const assignedColors = new Array(geojson.features.length).fill(null)
