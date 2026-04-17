@@ -4,7 +4,7 @@ import * as topojson from 'topojson-client'
 
 // Brightened 6-color oxidized ink palette
 const MAP_PALETTE = [
-  '#367066', // Bright Teal
+  '#008080', // Bright Teal
   '#2c5a8c', // Bright Deep Blue
   '#317546', // Bright Forest Green
   '#8c3636', // Bright Burgundy
@@ -12,10 +12,10 @@ const MAP_PALETTE = [
   '#b38827', // Bright Ochre
 ]
 
+// ─── LINK DETACHED TERRITORIES ───
 const TERRITORY_OWNERS = {
   'Alaska': 'United States of America',
-  'Hawaii': 'United States of America',
-  'Spanish West Africa': 'Spain',
+  'Hawaii': 'United States of America'
 }
 
 // Cache the base physical map so we only download it once per session
@@ -54,6 +54,21 @@ export default function HistoricalMap({ geojsonPath, year }) {
         const neighbors = topojson.neighbors(geometries)
         const geojson = topojson.feature(topology, topology.objects.countries)
 
+        // ─── BULLETPROOF WINDING ORDER FIX ───
+        // If a polygon is inverted, its spherical area will be larger than half the earth (> 2π).
+        geojson.features.forEach(feature => {
+          if (d3.geoArea(feature) > 2 * Math.PI) {
+            if (feature.geometry.type === 'Polygon') {
+              feature.geometry.coordinates.forEach(ring => ring.reverse())
+            } else if (feature.geometry.type === 'MultiPolygon') {
+              feature.geometry.coordinates.forEach(poly => {
+                poly.forEach(ring => ring.reverse())
+              })
+            }
+          }
+        })
+
+        // 3. Apply Colors
         const assignedColors = new Array(geojson.features.length).fill(null)
         const groupColors = {} 
 
@@ -79,7 +94,6 @@ export default function HistoricalMap({ geojsonPath, year }) {
           feature.properties.baseColor = assignedColors[i]
         })
 
-        // Pass both the political map and the base map to the renderer
         renderMap(geojson, cachedBaseLand)
         setStatus('ready')
 
@@ -125,7 +139,6 @@ export default function HistoricalMap({ geojsonPath, year }) {
       .translateExtent([[0, 0], [width, height]]) 
       .on('zoom', (event) => {
         g.attr('transform', event.transform)
-        // Keep borders thin for ALL layers (including grid) when zooming
         g.selectAll('.map-path').attr('stroke-width', 0.5 / event.transform.k)
       })
 
@@ -148,11 +161,8 @@ export default function HistoricalMap({ geojsonPath, year }) {
       .attr('stroke-width', 0.5)
 
     // ─── DRAW GRATICULE (Lat/Lon Grid) ───
-    // ─── DRAW GRATICULE (Lat/Lon Grid) ───
-    // We set the extent explicitly: [[minLon, minLat], [maxLon, maxLat]]
-    // The default is [[-180, -80], [180, 80]], so we change the 80s to 90s.
     const graticule = d3.geoGraticule()
-      .extent([[-180, -90], [180, 90]]) // Force lines to reach the poles
+      .extent([[-180, -90], [180, 90]])
 
     g.append('path')
       .datum(graticule)
@@ -161,7 +171,7 @@ export default function HistoricalMap({ geojsonPath, year }) {
       .attr('fill', 'none')
       .attr('stroke', 'var(--border)')
       .attr('stroke-width', 0.5)
-      .attr('stroke-opacity', 0.5)
+      .attr('stroke-opacity', 0.5) 
 
     // ─── DRAW BASE LAYER (Physical Landmass) ───
     if (baseLand) {
@@ -173,8 +183,8 @@ export default function HistoricalMap({ geojsonPath, year }) {
         .append('path')
         .attr('class', 'map-path')
         .attr('d', path)
-        .attr('fill', '#e6e3da') // Subtle parchment color
-        .attr('stroke', 'none')  // No stroke here so the graticule shows cleanly over water
+        .attr('fill', '#e6e3da') 
+        .attr('stroke', 'none')  
     }
 
     // ─── DRAW POLITICAL LAYER (Historical Borders) ───
