@@ -112,14 +112,15 @@ export default function HistoricalMap({ geojsonPath, year }) {
           feature.properties.baseColor = assignedColors[i]
           feature.properties.groupName = groupName
         })
-
+        
         // Pre-compute display name and colonial label on every feature.
         // Wrapped in try-catch so a bad entry in either lookup table can never
         // block renderMap — worst case is a missing label, not a broken map.
         try {
           geojson.features.forEach(feature => {
             feature.properties.colonialLabel = getColonialLabel(feature.properties)
-            feature.properties.displayName   = getDisplayName(feature.properties)
+            // Pass the active game year to get the exact historical name
+            feature.properties.displayName   = getDisplayName(feature.properties, year)
           })
         } catch (labelErr) {
           console.warn('Label pre-computation failed:', labelErr)

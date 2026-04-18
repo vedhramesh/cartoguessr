@@ -4,25 +4,13 @@
  * CShapes 2.0 uses single cntry_name strings across multiple political eras
  * (e.g. "Russia (Soviet Union)" covers the Tsarist, Soviet, and modern periods).
  * This file maps those strings to period-accurate display names for the hover panel.
- *
- * Each entry is an array of { startYear?, endYear?, displayName } periods.
- * startYear/endYear are matched against the feature's gwsyear/gweyear fields
- * (i.e., the date range of that specific feature row in CShapes, not the
- * current game year). Omitting startYear means "from the beginning of the
- * dataset"; omitting endYear means "through the end."
- *
- * Only entries that NEED remapping are listed. If a name is fine as-is,
- * it doesn't appear here and the raw cntry_name is shown unchanged.
  */
 
 const NAMES = {
-
   // ── Russia ────────────────────────────────────────────────────────────────
-  // GW codes Russia as a single continuous entity. CShapes splits it into
-  // rows covering distinct political eras which we can distinguish by gweyear.
   'Russia (Soviet Union)': [
     { endYear: 1917,   displayName: 'Russian Empire' },
-    { startYear: 1917, endYear: 1922,  displayName: 'Russia' },         // post-Tsar, pre-USSR
+    { startYear: 1917, endYear: 1922,  displayName: 'Russia' },
     { startYear: 1922, endYear: 1991,  displayName: 'Soviet Union' },
     { startYear: 1991,                 displayName: 'Russia' },
   ],
@@ -34,23 +22,18 @@ const NAMES = {
   ],
 
   // ── Persia / Iran ─────────────────────────────────────────────────────────
-  // Officially renamed from Persia to Iran in 1935.
   'Iran (Persia)': [
     { endYear: 1934,   displayName: 'Persia' },
     { startYear: 1935, displayName: 'Iran' },
   ],
 
   // ── Italy / Kingdom of Sardinia ───────────────────────────────────────────
-  // CShapes codes the pre-unification Sardinian state, which proclaimed the
-  // Kingdom of Italy in 1861.
   'Italy/Sardinia': [
     { endYear: 1860,   displayName: 'Kingdom of Sardinia' },
     { startYear: 1861, displayName: 'Italy' },
   ],
 
   // ── Germany ───────────────────────────────────────────────────────────────
-  // CShapes starts Germany (GW 255) at the North German Confederation (1867)
-  // and the unified empire is proclaimed in 1871.
   'Germany (Prussia)': [
     { endYear: 1870,   displayName: 'North German Confederation' },
     { startYear: 1871, endYear: 1918,  displayName: 'German Empire' },
@@ -59,8 +42,6 @@ const NAMES = {
   ],
 
   // ── Korea ─────────────────────────────────────────────────────────────────
-  // The undivided "Korea" entry covers the Japanese colonial period.
-  // Post-1945 entries are already named separately in CShapes.
   'Korea': [
     { endYear: 1910,   displayName: 'Korea (Joseon)' },
     { startYear: 1910, endYear: 1945,  displayName: 'Korea (Japanese)' },
@@ -82,7 +63,6 @@ const NAMES = {
   ],
 
   // ── Burma / Myanmar ───────────────────────────────────────────────────────
-  // Officially renamed in 1989, though recognition of the name was contested.
   'Myanmar (Burma)': [
     { endYear: 1988,   displayName: 'Burma' },
     { startYear: 1989, displayName: 'Myanmar' },
@@ -122,7 +102,8 @@ const NAMES = {
 
   // ── Congo (DRC) ──────────────────────────────────────────────────────────
   'Congo, Democratic Republic of (Zaire)': [
-    { endYear: 1960,   displayName: 'Belgian Congo' },
+    { endYear: 1907,   displayName: 'Congo Free State' },
+    { startYear: 1908, endYear: 1959,  displayName: 'Belgian Congo' },
     { startYear: 1960, endYear: 1964,  displayName: 'Republic of the Congo' },
     { startYear: 1965, endYear: 1996,  displayName: 'Zaire' },
     { startYear: 1997, displayName: 'Democratic Republic of the Congo' },
@@ -143,58 +124,101 @@ const NAMES = {
   ],
 
   // ── Bosnia ───────────────────────────────────────────────────────────────
-  // The pre-WWI "Bosnia" entry in CShapes is the Austro-Hungarian occupation.
   'Bosnia': [{ displayName: 'Bosnia (Austro-Hungarian)' }],
 
   // ── India ────────────────────────────────────────────────────────────────
-  // CShapes uses "India" for both colonial British India and independent India.
   'India': [
     { endYear: 1947,   displayName: 'British India' },
     { startYear: 1947, displayName: 'India' },
   ],
 
   // ── Austria-Hungary ──────────────────────────────────────────────────────
-  'Austria-Hungary': [{ displayName: 'Austria-Hungary' }],  // fine as-is, listed for completeness
+  'Austria-Hungary': [{ displayName: 'Austria-Hungary' }], 
 
   // ── Yemen ────────────────────────────────────────────────────────────────
   'Yemen (Arab Republic of Yemen)':  [{ displayName: 'Yemen Arab Republic (North Yemen)' }],
   'Yemen, People\'s Republic of':    [{ displayName: 'People\'s Democratic Republic of Yemen (South Yemen)' }],
 
-  // ── Sudan ────────────────────────────────────────────────────────────────
-  // Pre-independence it was an Anglo-Egyptian condominium (handled in
-  // colonialStatus.js label), but the name itself is fine.
-
   // ── Rumania ──────────────────────────────────────────────────────────────
-  // CShapes spells it "Rumania" (older transliteration).
   'Rumania': [{ displayName: 'Romania' }],
 
   // ── Czechoslovakia / German Democratic Republic ───────────────────────────
   'German Democratic Republic': [{ displayName: 'East Germany' }],
   'German Federal Republic':    [{ displayName: 'West Germany' }],
 
+  // ── Thailand / Siam ───────────────────────────────────────────────────────
+  'Thailand': [
+    { endYear: 1938,   displayName: 'Siam' },
+    { startYear: 1939, endYear: 1944,  displayName: 'Thailand' },
+    { startYear: 1945, endYear: 1949,  displayName: 'Siam' },
+    { startYear: 1950, displayName: 'Thailand' },
+  ],
+
+  // ── Sweden ────────────────────────────────────────────────────────────────
+  'Sweden': [
+    { endYear: 1904,   displayName: 'United Kingdoms of Sweden and Norway' },
+    { startYear: 1905, displayName: 'Sweden' },
+  ],
+
+  // ── Norway ────────────────────────────────────────────────────────────────
+  'Norway': [
+    { endYear: 1904,   displayName: 'United Kingdoms of Sweden and Norway' },
+    { startYear: 1905, displayName: 'Norway' },
+  ],
+
+  // ── Oman ──────────────────────────────────────────────────────────────────
+  'Oman': [
+    { endYear: 1969,   displayName: 'Sultanate of Muscat and Oman' },
+    { startYear: 1970, displayName: 'Oman' },
+  ],
+
+  // ── Indonesia ─────────────────────────────────────────────────────────────
+  'Indonesia': [
+    { endYear: 1944,   displayName: 'Indonesia (Dutch East Indies)' },
+    { startYear: 1945, displayName: 'Indonesia' },
+  ],
+
+  // ── China ─────────────────────────────────────────────────────────────────
+  'China': [
+    { endYear: 1911,   displayName: 'China (Qing Dynasty)' },
+    { startYear: 1912, displayName: 'China' },
+  ],
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
- * Returns a period-accurate display name for the hover panel, or null if the
- * raw cntry_name is already accurate and needs no remapping.
- *
+ * Returns a period-accurate display name for the hover panel.
  * @param {Object} props - GeoJSON feature.properties
- *   Must contain: cntry_name (string), gwsyear (number), gweyear (number)
+ * @param {number} currentYear - The active game year being displayed (CRITICAL for accuracy)
  * @returns {string|null}
  */
-export function getDisplayName(props) {
+export function getDisplayName(props, currentYear) {
   if (!props || !props.cntry_name) return null
   const periods = NAMES[props.cntry_name]
   if (!periods) return null
 
+  // 1. Most Accurate: Evaluate against the specific game year being rendered
+  if (currentYear) {
+    for (const period of periods) {
+      if (period.startYear && currentYear < period.startYear) continue
+      if (period.endYear && currentYear > period.endYear) continue
+      return period.displayName
+    }
+  }
+
+  // 2. Fallback: If no year is provided, test against the midpoint of the feature's lifespan
   const gwsyear = props.gwsyear ?? -Infinity
   const gweyear = props.gweyear ?? Infinity
+  const endYearBoundary = gweyear === -1 ? 2016 : gweyear
+  const midpoint = (gwsyear === -Infinity && gweyear === Infinity) ? 1950 :
+                   (gwsyear === -Infinity) ? endYearBoundary - 10 :
+                   (gweyear === Infinity) ? gwsyear + 10 :
+                   (gwsyear + endYearBoundary) / 2;
 
   for (const period of periods) {
-    if (period.startYear && gwsyear < period.startYear) continue
-    if (period.endYear   && gweyear > period.endYear)   continue
+    if (period.startYear && midpoint < period.startYear) continue
+    if (period.endYear   && midpoint > period.endYear)   continue
     return period.displayName
   }
 
