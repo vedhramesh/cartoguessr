@@ -83,8 +83,12 @@ def main():
         
         output_path = os.path.join(GEOJSON_OUTPUT_DIR, f"{year}.json")
         
-        # ---> TOPOJSON UPGRADE: Compress the geojson into a topology map
-        topo = tp.Topology(yearly_geojson, object_name="countries")
+        # ---> TOPOJSON UPGRADE: Compress the geojson into a topology map.
+        # prequantize=False disables coordinate quantization, which is the root
+        # cause of polygon inversion for small countries like Armenia — the
+        # quantization step reduces coordinate precision and can corrupt ring
+        # winding for polygons with many close-together vertices.
+        topo = tp.Topology(yearly_geojson, object_name="countries", prequantize=False)
         
         # Save the compressed dictionary to the file, stripping whitespace
         with open(output_path, 'w', encoding='utf-8') as f:

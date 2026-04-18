@@ -52,24 +52,36 @@ export default function HistoricalMap({ geojsonPath, year }) {
         const geojson = topojson.feature(topology, topology.objects.countries)
 
         // ─── Targeted inversion fix ───────────────────────────────────────────
-        // The Python topojson library occasionally corrupts ring winding for
-        // certain concave polygons (Armenia post-1992, for instance). We detect
-        // inverted features by checking their spherical area: a country that
-        // covers more than half the globe (> 2π steradians ≈ 6.28) is obviously
-        // rendering its complement and needs its exterior rings reversed.
-        // This is mathematically correct and only fires for actually-broken
-        // features, unlike a blanket Shoelace rewinder which breaks Pacific islands.
+        // The Python topojson library's quantization step corrupts some small
+        // polygons (Armenia post-1992, etc.) by inverting their exterior ring
+        // and adding a spurious hole in the shape of the actual territory.
+        // Result: exterior fills the whole globe (red bleed), hole punches out
+        // the country's shape (shows base land layer underneath).
+        //
+        // Fix: check each polygon's exterior ring area in isolation. If it
+        // covers more than half the sphere, it's inverted — reverse it and
+        // strip any holes (which are corruption artifacts, not real holes).
+        // Checking the exterior alone (not the full feature) avoids the hole
+        // skewing the area calculation.
         const HALF_SPHERE = 2 * Math.PI
+
+        const fixRings = (coordinates) => {
+          const exteriorArea = d3.geoArea({
+            type: 'Feature',
+            geometry: { type: 'Polygon', coordinates: [coordinates[0]] }
+          })
+          if (exteriorArea > HALF_SPHERE) {
+            coordinates[0].reverse()
+            coordinates.splice(1) // strip artifact holes
+          }
+        }
+
         geojson.features.forEach(feature => {
-          if (d3.geoArea(feature) > HALF_SPHERE) {
-            const reverseRings = (poly) => {
-              poly.forEach((ring, i) => { if (i === 0) ring.reverse() })
-            }
-            if (feature.geometry.type === 'Polygon') {
-              reverseRings(feature.geometry.coordinates)
-            } else if (feature.geometry.type === 'MultiPolygon') {
-              feature.geometry.coordinates.forEach(reverseRings)
-            }
+          if (!feature.geometry) return
+          if (feature.geometry.type === 'Polygon') {
+            fixRings(feature.geometry.coordinates)
+          } else if (feature.geometry.type === 'MultiPolygon') {
+            feature.geometry.coordinates.forEach(fixRings)
           }
         })
         // ─────────────────────────────────────────────────────────────────────
