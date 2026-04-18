@@ -27,7 +27,7 @@ export default function HomePage() {
             className="btn-primary"
             onClick={() => navigate('/game?mode=daily')}
           >
-            <span>Play Daily #{dayNum - 821}</span>
+            <span>Play Daily #{dayNum - 838}</span>
             <span className="btn-arrow">→</span>
           </button>
 
