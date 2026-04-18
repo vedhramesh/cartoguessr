@@ -50,9 +50,28 @@ export default function HistoricalMap({ geojsonPath, year }) {
         const neighbors = topojson.neighbors(geometries)
         const geojson = topojson.feature(topology, topology.objects.countries)
 
-        // topojson.feature() already outputs RFC 7946-compliant GeoJSON with
-        // correct winding. D3's geoPath handles spherical winding natively.
-        // No manual winding correction needed or wanted here.
+        // ─── Targeted inversion fix ───────────────────────────────────────────
+        // The Python topojson library occasionally corrupts ring winding for
+        // certain concave polygons (Armenia post-1992, for instance). We detect
+        // inverted features by checking their spherical area: a country that
+        // covers more than half the globe (> 2π steradians ≈ 6.28) is obviously
+        // rendering its complement and needs its exterior rings reversed.
+        // This is mathematically correct and only fires for actually-broken
+        // features, unlike a blanket Shoelace rewinder which breaks Pacific islands.
+        const HALF_SPHERE = 2 * Math.PI
+        geojson.features.forEach(feature => {
+          if (d3.geoArea(feature) > HALF_SPHERE) {
+            const reverseRings = (poly) => {
+              poly.forEach((ring, i) => { if (i === 0) ring.reverse() })
+            }
+            if (feature.geometry.type === 'Polygon') {
+              reverseRings(feature.geometry.coordinates)
+            } else if (feature.geometry.type === 'MultiPolygon') {
+              feature.geometry.coordinates.forEach(reverseRings)
+            }
+          }
+        })
+        // ─────────────────────────────────────────────────────────────────────
 
         const assignedColors = new Array(geojson.features.length).fill(null)
         const groupColors = {} 
