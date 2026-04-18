@@ -185,14 +185,18 @@ const NAMES = {
  * @returns {string|null}
  */
 export function getDisplayName(props) {
+  if (!props || !props.cntry_name) return null
   const periods = NAMES[props.cntry_name]
   if (!periods) return null
 
+  const gwsyear = props.gwsyear ?? -Infinity
+  const gweyear = props.gweyear ?? Infinity
+
   for (const period of periods) {
-    if (period.startYear && props.gwsyear < period.startYear) continue
-    if (period.endYear   && props.gweyear > period.endYear)   continue
+    if (period.startYear && gwsyear < period.startYear) continue
+    if (period.endYear   && gweyear > period.endYear)   continue
     return period.displayName
   }
 
-  return null  // no period matched — fall back to raw cntry_name
+  return null
 }
