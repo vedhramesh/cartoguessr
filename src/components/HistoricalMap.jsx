@@ -49,30 +49,9 @@ export default function HistoricalMap({ geojsonPath, year }) {
         const neighbors = topojson.neighbors(geometries)
         const geojson = topojson.feature(topology, topology.objects.countries)
 
-        // ─── THE CARTESIAN REWINDER (100% BULLETPROOF) ───
-        // Bypasses D3's spherical math and forces valid GeoJSON 
-        // using the 2D Shoelace formula.
-        geojson.features.forEach(feature => {
-          const fixWinding = (poly) => {
-            poly.forEach((ring, i) => {
-              let area = 0;
-              for (let j = 0; j < ring.length - 1; j++) {
-                area += (ring[j+1][0] - ring[j][0]) * (ring[j+1][1] + ring[j][1]);
-              }
-              // area < 0 means Counter-Clockwise (Exterior rings)
-              // area > 0 means Clockwise (Hole rings)
-              if (i === 0 && area > 0) ring.reverse(); 
-              if (i > 0 && area < 0) ring.reverse();   
-            });
-          };
-
-          if (feature.geometry.type === 'Polygon') {
-            fixWinding(feature.geometry.coordinates);
-          } else if (feature.geometry.type === 'MultiPolygon') {
-            feature.geometry.coordinates.forEach(fixWinding);
-          }
-        });
-        // ─────────────────────────────────────────────────
+        // topojson.feature() already outputs RFC 7946-compliant GeoJSON with
+        // correct winding. D3's geoPath handles spherical winding natively.
+        // No manual winding correction needed or wanted here.
 
         const assignedColors = new Array(geojson.features.length).fill(null)
         const groupColors = {} 
@@ -84,6 +63,7 @@ export default function HistoricalMap({ geojsonPath, year }) {
           if (groupColors[groupName]) {
             assignedColors[i] = groupColors[groupName]
             feature.properties.baseColor = groupColors[groupName]
+            feature.properties.groupName = groupName
             return
           }
 
@@ -97,6 +77,7 @@ export default function HistoricalMap({ geojsonPath, year }) {
           
           groupColors[groupName] = assignedColors[i]
           feature.properties.baseColor = assignedColors[i]
+          feature.properties.groupName = groupName
         })
 
         renderMap(geojson, cachedBaseLand)
@@ -189,7 +170,7 @@ export default function HistoricalMap({ geojsonPath, year }) {
         .attr('stroke', 'none')  
     }
 
-    g.append('g')
+    const politicalPaths = g.append('g')
       .attr('class', 'political-layer')
       .selectAll('path')
       .data(geojson.features)
@@ -200,34 +181,30 @@ export default function HistoricalMap({ geojsonPath, year }) {
       .attr('fill', d => d.properties.baseColor)
       .attr('stroke', 'var(--paper)')
       .attr('stroke-width', 0.5)
-      .attr('data-group', d => {
-        const name = d.properties.cntry_name || 'Unknown'
-        return TERRITORY_OWNERS[name] || name
-      })
       .style('transition', 'fill 0.1s ease')
       .style('cursor', 'grab')
       .on('mouseover', function(event, d) {
-        const rawName = d.properties.cntry_name || 'Unknown'
-        const groupName = TERRITORY_OWNERS[rawName] || rawName
-        
+        const groupName = d.properties.groupName
+
         setHoveredData({
           name: groupName,
           capital: d.properties.capname
         })
-        
+
         const highlightColor = d3.color(d.properties.baseColor).brighter(0.5).formatHex()
-        
-        g.selectAll(`path[data-group="${groupName}"]`)
-          .attr('fill', highlightColor) 
+
+        // Use D3 filter instead of CSS attribute selector —
+        // CSS selectors choke on apostrophes in names like "Côte d'Ivoire"
+        politicalPaths.filter(pd => pd.properties.groupName === groupName)
+          .attr('fill', highlightColor)
       })
       .on('mouseout', function(event, d) {
-        const rawName = d.properties.cntry_name || 'Unknown'
-        const groupName = TERRITORY_OWNERS[rawName] || rawName
-        
+        const groupName = d.properties.groupName
+
         setHoveredData(null)
-        
-        g.selectAll(`path[data-group="${groupName}"]`)
-          .attr('fill', pathData => pathData.properties.baseColor) 
+
+        politicalPaths.filter(pd => pd.properties.groupName === groupName)
+          .attr('fill', pd => pd.properties.baseColor)
       })
       .on('mousedown', function() {
         d3.select(this).style('cursor', 'grabbing')
