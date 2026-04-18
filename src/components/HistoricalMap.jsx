@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import * as d3 from 'd3'
 import * as topojson from 'topojson-client'
+import { getColonialLabel } from '../data/colonialStatus.js'
 
 const MAP_PALETTE = [
   '#367066', // Bright Teal
@@ -78,6 +79,12 @@ export default function HistoricalMap({ geojsonPath, year }) {
           groupColors[groupName] = assignedColors[i]
           feature.properties.baseColor = assignedColors[i]
           feature.properties.groupName = groupName
+        })
+
+        // Pre-compute colonial label on every feature so the mouseover
+        // doesn't have to recalculate it on every hover event.
+        geojson.features.forEach(feature => {
+          feature.properties.colonialLabel = getColonialLabel(feature.properties)
         })
 
         renderMap(geojson, cachedBaseLand)
@@ -188,7 +195,8 @@ export default function HistoricalMap({ geojsonPath, year }) {
 
         setHoveredData({
           name: groupName,
-          capital: d.properties.capname
+          capital: d.properties.capname,
+          colonialLabel: d.properties.colonialLabel || null,
         })
 
         const highlightColor = d3.color(d.properties.baseColor).brighter(0.5).formatHex()
@@ -270,6 +278,9 @@ export default function HistoricalMap({ geojsonPath, year }) {
       {hoveredData && (
         <div className="country-hover-panel">
           <div className="country-hover-name">{hoveredData.name}</div>
+          {hoveredData.colonialLabel && (
+            <div className="country-hover-colony">⚑ {hoveredData.colonialLabel}</div>
+          )}
           {hoveredData.capital && (
             <div className="country-hover-cap">★ {hoveredData.capital}</div>
           )}
