@@ -1,5 +1,4 @@
 // ─── Seeded PRNG (Mulberry32) ───────────────────────────────────────────────
-// Deterministic PRNG so all players get the same daily challenge.
 export function mulberry32(seed) {
   return function () {
     let t = (seed += 0x6d2b79f5)
@@ -10,7 +9,6 @@ export function mulberry32(seed) {
 }
 
 // ─── Daily seed ─────────────────────────────────────────────────────────────
-// Produces an integer seed from the calendar date (YYYYMMDD).
 export function getDailySeed() {
   const now = new Date()
   const y = now.getFullYear()
@@ -28,7 +26,6 @@ export function getDayNumber() {
 }
 
 // ─── Round picker ────────────────────────────────────────────────────────────
-// Given a list of available year entries and a PRNG, pick 5 unique rounds.
 export function pickRounds(availableYears, prng, count = 5) {
   const pool = [...availableYears]
   const picked = []
@@ -40,22 +37,21 @@ export function pickRounds(availableYears, prng, count = 5) {
 }
 
 // ─── Scoring ─────────────────────────────────────────────────────────────────
-// Max 5000 pts/round. Exponential decay. 0 if |diff| > 50.
+// Max 5000 pts/round. Exact match always returns exactly 5000.
+// Exponential decay for non-zero diff. 0 pts if |diff| > 50.
 export function calculateScore(actualYear, guessYear) {
   const diff = Math.abs(actualYear - guessYear)
+  if (diff === 0) return 5000
   if (diff > 50) return 0
-  // Exponential decay: score = 5000 * e^(-k * diff)
   // k chosen so that diff=25 yields ~1250 pts (25% of max)
   const k = Math.log(4) / 25
   return Math.round(5000 * Math.exp(-k * diff))
 }
 
 // ─── Score → emoji blocks ────────────────────────────────────────────────────
-// 5 blocks: each block represents 1000 pts.
-// 🟦 = full blue (>= threshold), 🟩 = partial green (> 0), ⬛ = zero
 export function scoreToBlocks(score) {
   const blocks = []
-  const full = Math.floor(score / 1000) // how many fully filled
+  const full = Math.floor(score / 1000)
   const partial = score % 1000 > 0 && full < 5 ? 1 : 0
   const empty = 5 - full - partial
   for (let i = 0; i < full; i++) blocks.push('🟦')

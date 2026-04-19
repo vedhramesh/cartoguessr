@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── LIGHT MODE (default) ─── */
 :root {
   --ink: #0a0a0a;
   --paper: #f8f7f4;
@@ -11,6 +12,58 @@
   --accent-green: #1f5c38;
   --muted: #888;
   --border: #d4d0c8;
+  --land-base: #e6e3da;
+}
+
+/* ─── DARK MODE ─── */
+[data-theme="dark"] {
+  --ink: #e8e5df;
+  --paper: #141414;
+  --dark-blue: #5a9fd4;
+  --dark-green: #3a8a56;
+  --accent-blue: #6aaee0;
+  --accent-green: #4aaa6a;
+  --muted: #777;
+  --border: #2e2e2e;
+  --land-base: #2c3340;
+}
+
+/* ─── Dark mode: map ocean background ─── */
+[data-theme="dark"] .historical-map-container {
+  background: #1a2535 !important;
+}
+
+/* ─── Dark mode: map controls ─── */
+[data-theme="dark"] .map-controls button:hover {
+  background-color: #2e2e2e;
+}
+
+[data-theme="dark"] .map-controls button:active {
+  background-color: #3a3a3a;
+}
+
+/* ─── Dark mode: round result panel (always dark, both modes) ─── */
+/* In light mode var(--ink) = dark, in dark mode = light — panel must stay dark */
+[data-theme="dark"] .round-result {
+  background: #1c1c1c;
+  color: #e8e5df;
+}
+
+/* ─── Dark mode: share preview ─── */
+[data-theme="dark"] .share-preview {
+  background: #1c1c1c;
+  color: #e8e5df;
+}
+
+/* ─── Dark mode: FAQ hover ─── */
+[data-theme="dark"] .faq-question:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* ─── Dark mode: secondary button ─── */
+[data-theme="dark"] .btn-secondary:hover {
+  color: var(--dark-green);
+  border-color: var(--dark-green);
 }
 
 * {
@@ -62,6 +115,41 @@ body {
 
 .site-logo span {
   color: var(--dark-blue);
+}
+
+.header-link {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.header-link:hover {
+  color: var(--ink);
+}
+
+/* ─── DARK MODE TOGGLE ─── */
+.theme-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--ink);
+  font-size: 13px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, background 0.15s;
+  border-radius: 2px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.theme-toggle:hover {
+  background: var(--border);
 }
 
 /* ─── HOME PAGE ─── */
@@ -293,6 +381,10 @@ body {
   overflow: hidden;
   background: #eeecea;
   border-right: 1px solid var(--border);
+}
+
+[data-theme="dark"] .map-container {
+  background: #1a2535;
 }
 
 .map-container svg {
@@ -776,13 +868,13 @@ input[type="number"].year-input:focus {
   -webkit-user-select: none;
 }
 
-/* ─── 7. ABOUT & FAQ PAGE ─── */
+/* ─── ABOUT & FAQ PAGE ─── */
 .about-content {
   padding: 2rem;
   max-width: 800px;
   margin: 0 auto;
   overflow-y: auto;
-  flex: 1; /* Allows scrolling if content gets too long */
+  flex: 1;
 }
 
 .about-content h1 {
@@ -842,6 +934,7 @@ input[type="number"].year-input:focus {
   font-size: 1.5rem;
   font-weight: normal;
 }
+
 /* FAQ Smooth Open Animation */
 .faq-answer-wrapper {
   display: grid;
@@ -885,7 +978,7 @@ input[type="number"].year-input:focus {
   font-size: 1.1rem;
   color: var(--ink);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  pointer-events: none; /* Prevents the panel from blocking D3 mouse events */
+  pointer-events: none;
   z-index: 10;
   animation: fade-in 0.15s ease-out;
 }

@@ -3,6 +3,7 @@ import * as d3 from 'd3'
 import * as topojson from 'topojson-client'
 import { getColonialLabel } from '../data/colonialStatus.js'
 import { getDisplayName } from '../data/historicalNames.js'
+import { getCountryColor } from '../data/countryColors.js'
 
 const MAP_PALETTE = [
   '#367066', // Bright Teal
@@ -52,17 +53,6 @@ export default function HistoricalMap({ geojsonPath, year }) {
         const geojson = topojson.feature(topology, topology.objects.countries)
 
         // ─── Targeted inversion fix ───────────────────────────────────────────
-        // The Python topojson library's quantization step corrupts some small
-        // polygons (Armenia post-1992, etc.) by inverting their exterior ring
-        // and adding a spurious hole in the shape of the actual territory.
-        // Result: exterior fills the whole globe (red bleed), hole punches out
-        // the country's shape (shows base land layer underneath).
-        //
-        // Fix: check each polygon's exterior ring area in isolation. If it
-        // covers more than half the sphere, it's inverted — reverse it and
-        // strip any holes (which are corruption artifacts, not real holes).
-        // Checking the exterior alone (not the full feature) avoids the hole
-        // skewing the area calculation.
         const HALF_SPHERE = 2 * Math.PI
 
         const fixRings = (coordinates) => {
@@ -72,7 +62,7 @@ export default function HistoricalMap({ geojsonPath, year }) {
           })
           if (exteriorArea > HALF_SPHERE) {
             coordinates[0].reverse()
-            coordinates.splice(1) // strip artifact holes
+            coordinates.splice(1)
           }
         }
 
@@ -86,6 +76,7 @@ export default function HistoricalMap({ geojsonPath, year }) {
         })
         // ─────────────────────────────────────────────────────────────────────
 
+        // ─── Graph coloring ───────────────────────────────────────────────────
         const assignedColors = new Array(geojson.features.length).fill(null)
         const groupColors = {} 
 
@@ -102,24 +93,41 @@ export default function HistoricalMap({ geojsonPath, year }) {
 
           const neighborColors = new Set(neighbors[i].map(n => assignedColors[n]))
           const availableColors = MAP_PALETTE.filter(color => !neighborColors.has(color))
-
           const randomIndex = Math.floor(Math.random() * availableColors.length)
           const chosenColor = availableColors[randomIndex]
 
           assignedColors[i] = chosenColor || MAP_PALETTE[Math.floor(Math.random() * MAP_PALETTE.length)]
-          
           groupColors[groupName] = assignedColors[i]
           feature.properties.baseColor = assignedColors[i]
           feature.properties.groupName = groupName
         })
+
+        // ─── Per-country color overrides ──────────────────────────────────────
+        // First pass: collect which groupNames have a fixed override color.
+        // We key by groupName so territories (Alaska, Hawaii → "United States of
+        // America") automatically inherit the override of their parent country.
+        const colorOverrides = {}
+        geojson.features.forEach(feature => {
+          const override = getCountryColor(feature.properties.cntry_name, year)
+          if (override) {
+            colorOverrides[feature.properties.groupName] = override
+          }
+        })
+
+        // Second pass: apply override to all features in each affected group.
+        geojson.features.forEach((feature, i) => {
+          const col = colorOverrides[feature.properties.groupName]
+          if (col) {
+            assignedColors[i] = col
+            feature.properties.baseColor = col
+            groupColors[feature.properties.groupName] = col
+          }
+        })
+        // ─────────────────────────────────────────────────────────────────────
         
-        // Pre-compute display name and colonial label on every feature.
-        // Wrapped in try-catch so a bad entry in either lookup table can never
-        // block renderMap — worst case is a missing label, not a broken map.
         try {
           geojson.features.forEach(feature => {
             feature.properties.colonialLabel = getColonialLabel(feature.properties)
-            // Pass the active game year to get the exact historical name
             feature.properties.displayName   = getDisplayName(feature.properties, year)
           })
         } catch (labelErr) {
@@ -210,9 +218,10 @@ export default function HistoricalMap({ geojsonPath, year }) {
         .data(baseLand.features)
         .enter()
         .append('path')
-        .attr('class', 'map-path')
+        .attr('class', 'map-path base-land-path')
         .attr('d', path)
-        .attr('fill', '#e6e3da') 
+        // CSS variable so dark mode can swap this without a JS re-render
+        .attr('fill', 'var(--land-base)')
         .attr('stroke', 'none')  
     }
 
@@ -240,16 +249,12 @@ export default function HistoricalMap({ geojsonPath, year }) {
 
         const highlightColor = d3.color(d.properties.baseColor).brighter(0.5).formatHex()
 
-        // Use D3 filter instead of CSS attribute selector —
-        // CSS selectors choke on apostrophes in names like "Côte d'Ivoire"
         politicalPaths.filter(pd => pd.properties.groupName === groupName)
           .attr('fill', highlightColor)
       })
       .on('mouseout', function(event, d) {
         const groupName = d.properties.groupName
-
         setHoveredData(null)
-
         politicalPaths.filter(pd => pd.properties.groupName === groupName)
           .attr('fill', pd => pd.properties.baseColor)
       })
