@@ -22,12 +22,15 @@ export default function HomePage() {
           existed — the closer your guess, the more points you score.
         </p>
 
+        // pages/HomePage.jsx
+
         <div className="home-actions">
           <button
             className="btn-primary"
             onClick={() => navigate('/game?mode=daily')}
           >
-            <span>Play Daily #{dayNum - 838}</span>
+            {/* Use dayNum directly instead of dayNum - 838 */}
+            <span>Play Daily #{dayNum}</span>
             <span className="btn-arrow">→</span>
           </button>
 

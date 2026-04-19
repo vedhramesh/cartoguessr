@@ -17,12 +17,15 @@ export function getDailySeed() {
   return parseInt(`${y}${m}${d}`, 10)
 }
 
-// Day number relative to epoch (2024-01-01) for display purposes
+// Day number relative to epoch (today) for display purposes
 export function getDayNumber() {
-  const epoch = new Date('2024-01-01T00:00:00Z')
+  // Set this to the exact date you want Day 0 to be
+  const epoch = new Date('2026-04-19T00:00:00Z')
   const now = new Date()
   const diff = now - epoch
-  return Math.floor(diff / (1000 * 60 * 60 * 24)) + 1
+  
+  // Removed the + 1 so the starting day is exactly 0
+  return Math.floor(diff / (1000 * 60 * 60 * 24))
 }
 
 // ─── Round picker ────────────────────────────────────────────────────────────
