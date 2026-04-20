@@ -29,6 +29,7 @@ const STATIC_COLORS = {
   'Uruguay':                  '#826556',
   'Peru':                     '#C4BDCC',
   'Brazil':                   '#81B17D',
+  'Argentina':                '#6566A3',
 
   // ── Western Europe ────────────────────────────────────────────────────────
   'France':                   '#223BBF',
@@ -42,7 +43,9 @@ const STATIC_COLORS = {
   'Norway':                   '#6F4747',
   'Switzerland':              '#E00505',
   'Luxembourg':               '#37898B',
-
+  'United Kingdom':           '#D1423A',
+  'Germany':                  '#858094',
+  
   // ── Central / Eastern Europe ──────────────────────────────────────────────
   'Poland':                   '#C55C6A',
   'Rumania':                  '#D7C448',  // CShapes spelling
@@ -58,6 +61,9 @@ const STATIC_COLORS = {
   'Czechoslovakia':           '#36A79C',
   'Czech Republic':           '#36A79C',
   'Serbia':                   '#A64839',
+  'Moldova':                  '#7F9218',
+  'Portugal':                 '#39A065',
+  'Russia':                   '#5E7F34',
 
   // ── Africa ───────────────────────────────────────────────────────────────
   'Morocco':                  '#E09271',
@@ -65,11 +71,19 @@ const STATIC_COLORS = {
   'Transvaal':                '#8CB79A',
   'South Africa':             '#9882BF',
   'Ethiopia':                 '#5889AC',
+  'Libya':                    '#00B400',
+  'Tunisia':                  '#928639',
+  'Algeria':                  '#C8B64C',
+  'Madagascar':               '#B9C5B1',
+  'Sudan':                    '#D7CEA3',
+  'South Sudan':              '#9AA992',
+  'Mauritania':               '#B9AAB5',
+  'Botswana':                 '#B4C5CD',
 
   // ── Asia ─────────────────────────────────────────────────────────────────
   'Korea':                          '#9D9061',
-  "Korea, People's Republic of":    '#9D9061',
-  'Korea, Republic of':             '#9D9061',
+  "Korea, People's Republic of":    '#5A0C0C',
+  'Korea, Republic of':             '#046589',
   'Nepal':                          '#89B77C',
   'Thailand':                       '#5889AC',
   'Iran (Persia)':                  '#477161',
@@ -85,6 +99,11 @@ const STATIC_COLORS = {
   "Yemen, People's Republic of":    '#FFBFBF',
   'Oman':                           '#628699',
   'Uzbekistan':                     '#5A8A89',
+  'Pakistan':                       '#0A875C',
+  'Bangladesh':                     '#44B42B',
+  'Turkmenistan':                   '#DABFAF',
+  'Kyrgyzstan':                     '#B7BCBF',
+  'Tajikistan':                     '#AEBAB5',
 
   // ── Oceania ───────────────────────────────────────────────────────────────
   'Australia':                '#398F61',

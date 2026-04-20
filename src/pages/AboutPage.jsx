@@ -19,7 +19,11 @@ export default function AboutPage() {
     },
     {
       q: "Why isn't [disputed territory] part of [my country]?",
-      a: "Take it up with ETH Zürich, that's where we get our data from."
+      a: "We don't have any control over the borders of countries — we get our data from ETH Zürich. If you have any complaints, please contact them."
+    },
+    {
+      q: "I have a suggestion/I've seen a bug!",
+      a: "Please DM us on Instagram! Follow us @cartoguessr"
     }
   ]
 
